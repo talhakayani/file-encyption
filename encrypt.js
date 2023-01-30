@@ -1,7 +1,15 @@
 const crypto = require("crypto");
 const fs = require("fs");
+const { generateRandomString, getConvertedKey } = require("./hash-passphrase");
 const algorithm = "aes-256-ctr";
-const password = "somethingwentwrongwhiletestingth";
+
+// Get Random Password
+const password = generateRandomString(32);
+
+// Encrypt PassPhrase using random insert location
+const encryptedPassword = getConvertedKey(password);
+
+fs.writeFileSync("key.json", JSON.stringify(encryptedPassword));
 
 function encrypt(chunk) {
   var cipher, result, iv;

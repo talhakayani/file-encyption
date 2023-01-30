@@ -1,8 +1,12 @@
 const crypto = require("crypto");
 const fs = require("fs");
+const { getOriginalKey } = require("./hash-passphrase");
 const algorithm = "aes-256-ctr";
-// const password = "secure my files hfh hhj $#@%^ hh";
-const password = "somethingwentwrongwhiletestingth";
+
+const fileContent = fs.readFileSync("key.json");
+const fileContentDetails = JSON.parse(fileContent.toString());
+
+const password = getOriginalKey(fileContentDetails);
 
 function decrypt(chunk) {
   var decipher, result, iv;

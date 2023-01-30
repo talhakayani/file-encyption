@@ -2,3 +2,4 @@ node_modules
 *.enc
 *.png
 *.txt
+*.json
