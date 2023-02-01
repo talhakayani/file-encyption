@@ -1,6 +1,6 @@
 const fs = require("fs");
 const { HTTP_STATUS_CODE } = require("../configs/constants");
-
+const database = require("../services/database");
 const { uploadFileToS3, uploadFileToIpfs } = require("../helpers/helper");
 const uploadFile = async (request, response) => {
   try {
@@ -8,10 +8,10 @@ const uploadFile = async (request, response) => {
     const uploadTo = request?.body?.uploadTo;
 
     const filePath = "public/images/";
-    const randomFileName =
-      new Date().getTime() + Math.floor(Math.random() * 1000);
+    // const randomFileName =
+    //   new Date().getTime() + Math.floor(Math.random() * 1000);
 
-    const filename = `${randomFileName}${file.name}`;
+    const filename = `encryptedFile.enc`;
 
     fs.writeFile(`${filePath}${filename}`, file?.data, async (err, res) => {
       if (err) {
@@ -23,8 +23,21 @@ const uploadFile = async (request, response) => {
           if (!data?.IpfsHash) {
             return response.status(HTTP_STATUS_CODE.INTERNAL_SERVER).json(data);
           }
+          console.log(
+            "🚀 ~ file: fileUpload.js:28 ~ fs.writeFile ~ data",
+            data
+          );
 
           fs.unlinkSync(`public/images/${filename}`);
+          const { filename: fileName, fileType, passphrase } = request.body;
+          const dataToSend = {
+            name: fileName,
+            type: fileType,
+            hash: data?.IpfsHash,
+            url: `https://piqsol.mypinata.cloud/ipfs/${data?.IpfsHash}`,
+            passphrase,
+          };
+          database.files.addFile(dataToSend);
           return response.status(HTTP_STATUS_CODE.OK).json(data);
         }
 

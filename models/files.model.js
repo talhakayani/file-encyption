@@ -13,10 +13,11 @@ const fileSchema = new Schema(
       unique: true,
     },
     url: { type: String },
+    passphrase: { type: String },
   },
 
   { timestamps: true }
 );
 
-const File = model("Admin", fileSchema);
+const File = model("File", fileSchema);
 module.exports = File;

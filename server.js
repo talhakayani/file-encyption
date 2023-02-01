@@ -8,12 +8,13 @@ const express = require("express");
 const helmet = require("helmet");
 const multer = require("multer");
 const fileupload = require("express-fileupload");
+var cors = require("cors");
 // const { listCollectionMints } = require('./collection-list-eth')
 // const { mintCollectionMint } = require('./collection-mint-eth')
 
 // const swaggerUi = require("swagger-ui-express");
 
-// const database = require("./services/database");
+const database = require("./services/database");
 // const cronJobs = require("./services/cronJobs");
 
 /* ----------------------------------- */
@@ -32,7 +33,7 @@ app.set("json spaces", isDev ? 2 : 0);
 /* ----------------------------------- */
 /* Initiating Database connection */
 /* ----------------------------------- */
-// database.connect();
+database.connect();
 // cronJobs.init();
 // listCollectionMints()
 // mintCollectionMint()
@@ -49,6 +50,8 @@ app.set("json spaces", isDev ? 2 : 0);
 
 // Security related middlewares
 app.use(helmet());
+app.use(cors());
+
 // app.use(require("./middlewares/nocache"));
 // app.use(require("./middlewares/cors-handler"));
 
