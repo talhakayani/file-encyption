@@ -16,6 +16,7 @@ function encrypt(chunk) {
 
   // Create an iv
   iv = crypto.randomBytes(16);
+  console.log("🚀 ~ file: encrypt.js:19 ~ encrypt ~ iv", iv);
 
   // Create a new cipher
   cipher = crypto.createCipheriv(algorithm, password, iv);
