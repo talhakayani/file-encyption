@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const files = require("./files.database");
+const fileShares = require("./fileShares.database");
 
 let $connection = false;
 // mongoose.set("debug", true);
@@ -27,4 +28,4 @@ const connect = () => {
   return $connection;
 };
 
-module.exports = { connect, files };
+module.exports = { connect, files, fileShares };

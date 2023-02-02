@@ -13,4 +13,8 @@ const shareFile = async (payload) => {
   return await share.save();
 };
 
-module.exports = { addFile, getFile, shareFile };
+const getAllFiles = async () => {
+  return await Files.find().select("name hash type url").lean();
+};
+
+module.exports = { addFile, getFile, shareFile, getAllFiles };

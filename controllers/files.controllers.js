@@ -20,4 +20,19 @@ const addFiles = async (request, response) => {
   }
 };
 
-module.exports = { addFiles };
+const getFiles = async (request, response) => {
+  try {
+    const files = await database.files.getAllFiles();
+
+    return response.status(HTTP_STATUS_CODE.OK).send({
+      success: true,
+      message: "All Files",
+      files,
+    });
+  } catch (err) {
+    console.log("🚀 ~ file: files.controllers.js:27 ~ getFiles ~ err", err);
+    return response.status(HTTP_STATUS_CODE.INTERNAL_SERVER).json(err);
+  }
+};
+
+module.exports = { addFiles, getFiles };

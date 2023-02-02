@@ -2,7 +2,7 @@ const fs = require("fs");
 const { HTTP_STATUS_CODE } = require("../configs/constants");
 const database = require("../services/database");
 const { uploadFileToS3, uploadFileToIpfs } = require("../helpers/helper");
-const { generateRandomString } = require("../helpers/hash-passphrase");
+const { generateHash } = require("../helpers/hash-passphrase");
 const { cryptPassword } = require("../helpers/bcrypt-passphrase");
 const slugify = require("slugify");
 const uploadFile = async (request, response) => {
@@ -66,22 +66,27 @@ const shareFile = async (request, response) => {
       "🚀 ~ file: fileUpload.js:65 ~ shareFile ~ fileDetails",
       fileDetails
     );
-    const slug = slugify(fileDetails?.name);
-    const randomString = generateRandomString(16);
-    // const encryptPassphrase = await cryptPassword(fileDetails?.passphrase);
-    const encryptPassphrase =
-      "$2b$10$8MnvuX4zn6lycynGklhuO.PV7HEWWQv.131dO3iR6FPu5xIRpFA6e";
 
-    const hostname = request.headers.host;
-    const url = `http://${hostname}/${randomString}/${encryptPassphrase}/${fileDetails?.name}`;
+    const sharedHash = generateHash(
+      JSON.stringify({ ...fileDetails, timestamp: new Date() })
+    );
+
     const dataToSend = {
       fileId: fileDetails?._id,
-      url,
+      sharedHash,
       status: "active",
     };
-    database.files.shareFile(dataToSend);
+    const shareFileResponse = await database.files.shareFile(dataToSend);
 
-    return response.status(HTTP_STATUS_CODE.OK).json(dataToSend);
+    if (!shareFileResponse) {
+      return response
+        .status(HTTP_STATUS_CODE.CONFLICT)
+        .send({ message: "Unable to share file.", success: false });
+    }
+
+    return response
+      .status(HTTP_STATUS_CODE.OK)
+      .send({ message: "File shared link generated.", success: true });
   } catch (error) {
     console.log("🚀 ~ file: nft.js ~ line 475 ~ uploadFile ~ error", error);
     return response.status(HTTP_STATUS_CODE.INTERNAL_SERVER).json(error);
