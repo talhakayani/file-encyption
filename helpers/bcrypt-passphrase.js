@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const fs = require("fs");
 
 const cryptPassword = async (password) => {
+  let hashedPassword = undefined;
   bcrypt.genSalt(10, function (err, Salt) {
     // The bcrypt is used for encrypting password.
     bcrypt.hash(password, Salt, function (err, hash) {
@@ -10,12 +11,16 @@ const cryptPassword = async (password) => {
       }
 
       hashedPassword = hash;
-      const data = { originalPassword: password, hashedPassword };
-      fs.writeFileSync("hashedPassword.json", JSON.stringify(data));
-
+      // const data = { originalPassword: password, hashedPassword };
+      // fs.writeFileSync("hashedPassword.json", JSON.stringify(data));
+      console.log(
+        "🚀 ~ file: bcrypt-passphrase.js:19 ~ hashedPassword",
+        hashedPassword
+      );
       return hashedPassword;
     });
   });
+  return hashedPassword;
 };
 const comparePassword = async (password, hashedPassword) => {
   let matched = 0;
