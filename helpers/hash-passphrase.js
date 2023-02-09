@@ -1,4 +1,5 @@
 // const password = "somePeopleHaveCurlyBrownHairComb";
+const CryptoJs = require("crypto-js");
 
 const generateRandomString = (length) => {
   let result = "";
@@ -37,8 +38,27 @@ const getOriginalKey = (pasePhraseDetails) => {
   return pasePhraseDetails.key.replace(pasePhraseDetails.randomSalt, "");
 };
 
+const encryptInformation = (information) => {
+  const cipherText = CryptoJs.AES.encrypt(
+    information,
+    process.env.PASS_PHRASE_ENCRYPTION_PRIVATE_KEY
+  );
+
+  return cipherText.toString();
+};
+
+const generateHash = (data) => {
+  const hash = CryptoJs.HmacSHA256(
+    data,
+    process.env.PASS_PHRASE_ENCRYPTION_PRIVATE_KEY
+  );
+
+  return hash;
+};
 module.exports = {
   getOriginalKey,
   getConvertedKey,
   generateRandomString,
+  encryptInformation,
+  generateHash,
 };
