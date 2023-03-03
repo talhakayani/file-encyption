@@ -8,7 +8,15 @@ const getFileSharesByQuery = async (query) => {
   return fileShares;
 };
 const getFileShareByHash = async (hash) => {
-  const fileShares = await FileShares.findOne(hash).populate("fileId").lean();
+  const fileShares = await FileShares.findOne(hash)
+    .populate([
+      {
+        path: "fileId",
+        model: "File",
+        populate: [{ path: "bucketId", model: "Bucket" }],
+      },
+    ])
+    .lean();
   return fileShares;
 };
 

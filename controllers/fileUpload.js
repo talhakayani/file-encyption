@@ -1,10 +1,16 @@
 const fs = require("fs");
 const { HTTP_STATUS_CODE } = require("../configs/constants");
 const database = require("../services/database");
-const { uploadFileToS3, uploadFileToIpfs } = require("../helpers/helper");
+const {
+  uploadFileToS3,
+  uploadFileToIpfs,
+  encrypt,
+} = require("../helpers/helper");
 const { generateHash } = require("../helpers/hash-passphrase");
 const { cryptPassword } = require("../helpers/bcrypt-passphrase");
 const slugify = require("slugify");
+const CryptoJS = require("crypto-js");
+
 const uploadFile = async (request, response) => {
   try {
     const file = request?.files?.file;
@@ -32,13 +38,14 @@ const uploadFile = async (request, response) => {
           );
 
           fs.unlinkSync(`public/images/${filename}`);
-          const { filename: fileName, fileType, passphrase } = request.body;
+          const { filename: fileName, fileType } = request.body;
           const dataToSend = {
             name: fileName,
             type: fileType,
             hash: data?.IpfsHash,
             url: `https://piqsol.mypinata.cloud/ipfs/${data?.IpfsHash}`,
-            passphrase,
+            bucketId: request?.body?.bucketId,
+            // passphrase,
           };
           database.files.addFile(dataToSend);
           return response.status(HTTP_STATUS_CODE.OK).json(data);
@@ -61,20 +68,42 @@ const uploadFile = async (request, response) => {
 const shareFile = async (request, response) => {
   try {
     const fileId = request?.query?.id;
+    const passPhrase = request?.body?.passPhrase;
+    console.log(
+      "🚀 ~ file: fileUpload.js:72 ~ shareFile ~ passPhrase:",
+      passPhrase
+    );
     const fileDetails = await database.files.getFile(fileId);
     console.log(
       "🚀 ~ file: fileUpload.js:65 ~ shareFile ~ fileDetails",
-      fileDetails
+      fileDetails,
+      fileDetails?.bucketId?.salt
     );
 
     const sharedHash = generateHash(
       JSON.stringify({ ...fileDetails, timestamp: new Date() })
+    );
+    const generatedPassPhrase = CryptoJS.PBKDF2(
+      passPhrase,
+      fileDetails?.bucketId?.salt,
+      32,
+      1000
+    )?.toString(CryptoJS?.enc?.Hex);
+    console.log(
+      "🚀 ~ file: fileUpload.js:87 ~ shareFile ~ generatedPassPhrase:",
+      generatedPassPhrase
+    );
+    const secretKey = encrypt(generatedPassPhrase);
+    console.log(
+      "🚀 ~ file: fileUpload.js:92 ~ shareFile ~ secretKey:",
+      secretKey
     );
 
     const dataToSend = {
       fileId: fileDetails?._id,
       sharedHash,
       status: "active",
+      secretKey,
     };
     const shareFileResponse = await database.files.shareFile(dataToSend);
 

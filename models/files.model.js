@@ -14,6 +14,7 @@ const fileSchema = new Schema(
     },
     url: { type: String },
     passphrase: { type: String },
+    bucketId: { type: Schema.Types.ObjectId, required: true, ref: "Bucket" },
   },
 
   { timestamps: true }

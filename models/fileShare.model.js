@@ -9,6 +9,9 @@ const fileSchema = new Schema(
       enum: ["active", "expired"],
       default: "active",
     },
+    secretKey: {
+      type: String,
+    },
   },
 
   { timestamps: true }

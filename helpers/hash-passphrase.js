@@ -55,10 +55,22 @@ const generateHash = (data) => {
 
   return hash;
 };
+
+const generateRandomSalt = (bucketId) => {
+  const randomStringTempSalt = generateRandomString(32);
+  const hash = CryptoJs.HmacSHA256(
+    { randomStringTempSalt, bucketId },
+    process.env.PASS_PHRASE_ENCRYPTION_PRIVATE_KEY
+  );
+
+  return hash.toString();
+};
+
 module.exports = {
   getOriginalKey,
   getConvertedKey,
   generateRandomString,
   encryptInformation,
   generateHash,
+  generateRandomSalt,
 };

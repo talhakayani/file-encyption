@@ -6,6 +6,9 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const AWS = require("aws-sdk");
 const fs = require("fs");
+const CryptoJs = require("crypto-js");
+
+const crypto = require("crypto");
 // Create an S3 client
 var ep = new AWS.Endpoint(process.env.AWS_S3_URL);
 
@@ -40,8 +43,41 @@ transporter.use("compile", hbs(handlebarOptions));
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+const algorithm = "aes-256-cbc";
 
 module.exports = {
+  encrypt: (text) => {
+    const cipher = crypto.createCipheriv(
+      algorithm,
+      process.env.PASS_PHRASE_ENCRYPTION_PRIVATE_KEY,
+      process.env.PASS_PHRASE_IV
+    );
+    let encrypted = cipher.update(text, "utf8", "hex");
+    encrypted += cipher.final("hex");
+    return encrypted;
+  },
+  decrypt: (text) => {
+    const decipher = crypto.createDecipheriv(
+      algorithm,
+      process.env.PASS_PHRASE_ENCRYPTION_PRIVATE_KEY,
+      process.env.PASS_PHRASE_IV
+    );
+    let decrypted = decipher.update(text, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  },
+
+  decryptFileContent: (encryptedContent, encryptionKey) => {
+    const encryptedInformationBytes = CryptoJS.AES.decrypt(
+      encryptedContent,
+      encryptionKey
+    );
+
+    const encryptedInformation = encryptedInformationBytes.toString(
+      CryptoJS.enc.Utf8
+    );
+    return encryptedInformation;
+  },
   metaplexConfirm: async (network, tx) => {
     let confirmedTx = null;
     for (let tries = 0; tries < MAX_RETRIES; tries++) {

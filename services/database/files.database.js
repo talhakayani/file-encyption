@@ -6,7 +6,7 @@ const addFile = async (payload) => {
   return await file.save();
 };
 const getFile = async (_id) => {
-  return await Files.findById(_id);
+  return await Files.findById(_id).populate("bucketId").lean();
 };
 const shareFile = async (payload) => {
   const share = new FileShare(payload);
