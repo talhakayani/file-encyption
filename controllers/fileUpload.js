@@ -68,10 +68,10 @@ const uploadFile = async (request, response) => {
 const shareFile = async (request, response) => {
   try {
     const fileId = request?.query?.id;
-    const passPhrase = request?.body?.passPhrase;
+    const accessKey = request?.body?.accessKey;
     console.log(
       "🚀 ~ file: fileUpload.js:72 ~ shareFile ~ passPhrase:",
-      passPhrase
+      accessKey
     );
     const fileDetails = await database.files.getFile(fileId);
     console.log(
@@ -83,21 +83,21 @@ const shareFile = async (request, response) => {
     const sharedHash = generateHash(
       JSON.stringify({ ...fileDetails, timestamp: new Date() })
     );
-    const generatedPassPhrase = CryptoJS.PBKDF2(
-      passPhrase,
-      fileDetails?.bucketId?.salt,
-      32,
-      1000
-    )?.toString(CryptoJS?.enc?.Hex);
-    console.log(
-      "🚀 ~ file: fileUpload.js:87 ~ shareFile ~ generatedPassPhrase:",
-      generatedPassPhrase
-    );
-    const secretKey = encrypt(generatedPassPhrase);
-    console.log(
-      "🚀 ~ file: fileUpload.js:92 ~ shareFile ~ secretKey:",
-      secretKey
-    );
+    // const generatedPassPhrase = CryptoJS.PBKDF2(
+    //   accessKey,
+    //   fileDetails?.bucketId?.salt,
+    //   32,
+    //   1000
+    // )?.toString(CryptoJS?.enc?.Hex);
+    // console.log(
+    //   "🚀 ~ file: fileUpload.js:87 ~ shareFile ~ generatedPassPhrase:",
+    //   generatedPassPhrase
+    // );
+    const secretKey = encrypt(accessKey);
+    // console.log(
+    //   "🚀 ~ file: fileUpload.js:92 ~ shareFile ~ secretKey:",
+    //   secretKey
+    // );
 
     const dataToSend = {
       fileId: fileDetails?._id,
