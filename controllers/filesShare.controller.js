@@ -107,6 +107,7 @@ const getFileSharesByHash = async (request, response) => {
       fileName: fileShares?.fileId?.name,
       fileType: fileShares?.fileId?.type,
       fileURI: fileShares?.fileId?.url,
+      fileCid: fileShares?.fileId?.hash,
       status: fileShares?.status,
     };
 
