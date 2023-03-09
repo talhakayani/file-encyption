@@ -12,10 +12,6 @@ const getFileSharesByHash = async (request, response) => {
     const fileShares = await database.fileShares.getFileShareByHash({
       sharedHash,
     });
-    console.log(
-      "🚀 ~ file: filesShare.controller.js:18 ~ getFileSharesByHash ~ fileShares:",
-      fileShares
-    );
 
     if (!fileShares || fileShares?.length <= 0) {
       return response
@@ -27,10 +23,6 @@ const getFileSharesByHash = async (request, response) => {
       fileShares?.grant,
       fileShares?.sharedHash
     ).toString(CryptoJS.enc.Hex);
-    console.log(
-      "🚀 ~ file: filesShare.controller.js:33 ~ getFileSharesByHash ~ verifySignature:",
-      verifySignature
-    );
 
     if (verifySignature !== fileShares?.signature) {
       return response
@@ -38,14 +30,9 @@ const getFileSharesByHash = async (request, response) => {
         .send({ success: false, message: "Signature not verified." });
     }
 
-    // const fileEncryptedContent = await axios.get(fileShares?.fileId?.url);
+    const { readFileFromIPFS } = await import("../helpers/ipfs.mjs");
     const fileEncryptedContent = await readFileFromIPFS(
-      ipfsClient,
       fileShares?.fileId?.hash
-    );
-    console.log(
-      "🚀 ~ file: filesShare.controller.js:51 ~ getFileSharesByHash ~ fileEncryptedContent:",
-      fileEncryptedContent
     );
 
     const originalEncryptionKey = CryptoJS.AES.decrypt(
