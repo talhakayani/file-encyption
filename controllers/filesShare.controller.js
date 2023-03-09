@@ -1,119 +1,76 @@
 const { HTTP_STATUS_CODE } = require("../configs/constants");
 const { encryptInformation } = require("../helpers/hash-passphrase");
 const database = require("../services/database");
-const { decrypt } = require("../helpers/helper");
+const { decrypt, readFileFromIPFS } = require("../helpers/helper");
 const axios = require("axios");
-// const CryptoJS = require("crypto-js");
-const crypto = require("crypto");
-const forge = require("node-forge");
+const CryptoJS = require("crypto-js");
 
 const getFileSharesByHash = async (request, response) => {
   try {
-    const { sharedHash } = request.query;
-    const { access: publicKey } = request.body;
-    console.log(
-      "🚀 ~ file: filesShare.controller.js:13 ~ getFileSharesByHash ~ publicKey:",
-      publicKey
-    );
+    const { sharedHash } = request.params;
 
     const fileShares = await database.fileShares.getFileShareByHash({
       sharedHash,
     });
+    console.log(
+      "🚀 ~ file: filesShare.controller.js:18 ~ getFileSharesByHash ~ fileShares:",
+      fileShares
+    );
 
-    if (fileShares?.length <= 0) {
+    if (!fileShares || fileShares?.length <= 0) {
       return response
         .status(HTTP_STATUS_CODE.NOT_FOUND)
         .send({ success: false, message: "share link not found." });
     }
 
+    const verifySignature = CryptoJS.HmacSHA256(
+      fileShares?.grant,
+      fileShares?.sharedHash
+    ).toString(CryptoJS.enc.Hex);
     console.log(
-      "🚀 ~ file: filesShare.controller.js:12 ~ getFileSharesByHash ~ fileShares:",
-      fileShares
+      "🚀 ~ file: filesShare.controller.js:33 ~ getFileSharesByHash ~ verifySignature:",
+      verifySignature
     );
 
-    //File Details: fileShares?.fileId
-    // Bucket Details: fileShares?.fileId?.bucketId
+    if (verifySignature !== fileShares?.signature) {
+      return response
+        .status(HTTP_STATUS_CODE.UNAUTHORIZED)
+        .send({ success: false, message: "Signature not verified." });
+    }
 
     // const fileEncryptedContent = await axios.get(fileShares?.fileId?.url);
-    // console.log(
-    //   "🚀 ~ file: filesShare.controller.js:31 ~ getFileSharesByHash ~ fileEncryptedContent:",
-    //   fileEncryptedContent?.data
-    // );
-
-    // const originalEncryptionKey = decrypt(fileShares?.secretKey);
-
-    // const fileContent = CryptoJS.AES.decrypt(
-    //   fileEncryptedContent?.data,
-    //   originalEncryptionKey
-    // ).toString(CryptoJS.enc.Latin1);
-    // console.log(
-    //   "🚀 ~ file: filesShare.controller.js:38 ~ getFileSharesByHash ~ fileContent:",
-    //   fileContent
-    // );
-
-    // // const imageString =
-    // //   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAHgCAYAAAA10dzkAAAgAElEQVR4Xu3dCZPdVZXH8f/+gtnAwgKRElW..."; // replace this with your image string
-
-    // const matches = fileContent.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    // const type = matches[1];
-    // const buffer = Buffer.from(matches[2], "base64");
-
-    // response.writeHead(200, {
-    //   "Content-Type": type,
-    //   "Content-Length": buffer.length,
-    // });
-
-    // console.log("testing...");
-    // response.end(buffer);
-
-    // const encryptedSharesDetails = encryptInformation(
-    //   JSON.stringify(fileShares)
-
-    // );
-
-    // console.log("File Content", fileContent?.length);
-
-    // response.setHeader("Content-Type", fileShares?.fileId?.type);
-    // response.setHeader("Content-Length", fileContent.length);
-
-    // // // Send image content as binary stream
-    // // response.write(fileContent);
-    // // response.end();
-    // response.send(fileContent);
-    const decryptedSecreteKey = decrypt(fileShares?.secretKey);
+    const fileEncryptedContent = await readFileFromIPFS(
+      ipfsClient,
+      fileShares?.fileId?.hash
+    );
     console.log(
-      "🚀 ~ file: filesShare.controller.js:79 ~ getFileSharesByHash ~ decryptedSecreteKey:",
-      decryptedSecreteKey
+      "🚀 ~ file: filesShare.controller.js:51 ~ getFileSharesByHash ~ fileEncryptedContent:",
+      fileEncryptedContent
     );
 
-    const publicKeyInstance = forge.pki.publicKeyFromPem(publicKey);
+    const originalEncryptionKey = CryptoJS.AES.decrypt(
+      fileShares?.grant,
+      fileShares?.secretKey,
+      {
+        iv: fileShares?.fileId?.bucketId?.salt,
+      }
+    ).toString();
 
-    const encryptedHex = forge.util.encode64(
-      publicKeyInstance.encrypt(decryptedSecreteKey, "RSA-OAEP", {
-        md: forge.md.sha256.create(),
-        mgf1: {
-          md: forge.md.sha256.create(),
-        },
-      })
-    );
+    const fileContent = CryptoJS.AES.decrypt(
+      fileEncryptedContent,
+      originalEncryptionKey
+    ).toString(CryptoJS.enc.Latin1);
 
-    console.log(
-      "🚀 ~ file: filesShare.controller.js:104 ~ getFileSharesByHash ~ encryptedHex:",
-      encryptedHex
-    );
+    const matches = fileContent.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    const type = matches[1];
+    const buffer = Buffer.from(matches[2], "base64");
 
-    const fileInformation = {
-      secretKey: encryptedHex,
-      fileName: fileShares?.fileId?.name,
-      fileType: fileShares?.fileId?.type,
-      fileURI: fileShares?.fileId?.url,
-      fileCid: fileShares?.fileId?.hash,
-      status: fileShares?.status,
-    };
+    response.writeHead(200, {
+      "Content-Type": type,
+      "Content-Length": buffer.length,
+    });
 
-    return response
-      .status(HTTP_STATUS_CODE.OK)
-      .send({ success: true, fileInformation });
+    response.end(buffer);
   } catch (err) {
     console.log("🚀 ~ file: files.controllers.js:8 ~ addFiles ~ err", err);
     return response.status(HTTP_STATUS_CODE.INTERNAL_SERVER).json(err);

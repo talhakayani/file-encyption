@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "type": "commonjs",
   "private": true,
   "engines": {
     "node": ">=14.0.0 <=17.0.0",
@@ -65,6 +66,8 @@
     "gifsicle": "^6.0.3",
     "helmet": "^4.6.0",
     "ioredis": "^4.28.0",
+    "ipfs": "^0.66.0",
+    "ipfs-core": "^0.18.0",
     "jsonwebtoken": "^8.5.1",
     "jsrsasign": "^10.6.1",
     "lodash": "^4.17.21",

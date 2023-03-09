@@ -229,4 +229,17 @@ module.exports = {
     // trigger the sending of the E-mail
     return await transporter.sendMail(mailOptions);
   },
+  readFileFromIPFS: async (ipfsClient, cid) => {
+    const stream = await ipfsClient.cat(cid);
+
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+
+    const content = Buffer.concat(chunks);
+
+    const decodedContent = new TextDecoder().decode(content);
+    return decodedContent;
+  },
 };
